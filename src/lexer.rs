@@ -2,7 +2,7 @@
 pub enum TokenKind {
     //name like var fns and stuff
     Ident(String),
-    
+
     //keywords( why not name? because its f**cking slow i guess bc bc )
     KwLet, //var decalre
     KwFn, //defun
@@ -18,39 +18,39 @@ pub enum TokenKind {
     KwConst,
     KwMut, // changeable? like mutable
     KwImport,
-    
+
     // literals ( Why the hell do they need to call the long word instead of data type s**t )
     IntLiteral(i64),
     FloatLiteral(f64),
     StringLiteral(String),
-    
+
     // yeah 'nil' WHY NOT NONE OR NULL laugh over life lang design nerds
     KwNil,
-    
+
     // ops
     Plus,
     Minus,
     Star,
     Slash,
     Percent,
-    
+
     Equal,
     PlusEqual,
     MinusEqual,
     StarEqual,
     SlashEqual,
-    
-    EqEq, // ik ik its funny 
+
+    EqEq, // ik ik its funny
     BangEq, // been a hell of a ride but i think its my time to grow bang BaNg BANG
     Less,
     LessEq,
     Greater,
     GreaterEq,
-    
+
     Bang,
     AndAnd,
     OrOr,
-    
+
     Dot,
     FatArrow, // => "Fat Arrow" these "Naming conventions" are killing me
     LParen,
@@ -62,9 +62,9 @@ pub enum TokenKind {
     Comma,
     Semicolon,
     Colon,
-    
+
     Eof,
-} 
+}
 
 pub struct Lexer {
     chars: Vec<char>,
@@ -117,9 +117,9 @@ impl Lexer {
         }
     }
 
-    fn lex_identifier_or_keyword(&mut self) -> TokenKind {
+    fn ident_or_kw(&mut self) -> TokenKind {
         let start = self.pos;
-        self.pos += 1; // we know first char is [a-zA-Z_]
+        self.pos += 1;
 
         while let Some(c) = self.curr() {
             if c.is_ascii_alphanumeric() || c == '_' {
@@ -153,7 +153,7 @@ impl Lexer {
 
     fn lex_number(&mut self) -> TokenKind {
         let start = self.pos;
-        self.pos += 1; // first digit
+        self.pos += 1;
 
         while let Some(c) = self.curr() {
             if c.is_ascii_digit() {
@@ -165,12 +165,11 @@ impl Lexer {
 
         let mut is_float = false;
 
-        // optional ".digits"
         if let Some('.') = self.curr() {
             if let Some(next) = self.next() {
                 if next.is_ascii_digit() {
                     is_float = true;
-                    self.pos += 1; // '.'
+                    self.pos += 1;
                     while let Some(c) = self.curr() {
                         if c.is_ascii_digit() {
                             self.pos += 1;
@@ -193,19 +192,17 @@ impl Lexer {
     }
 
     fn lex_string(&mut self) -> TokenKind {
-        // current char is '"'
-        self.pos += 1; // skip opening "
+        self.pos += 1;
         let mut result = String::new();
 
         while let Some(c) = self.curr() {
             self.pos += 1;
             match c {
                 '"' => {
-                    // end of string
                     return TokenKind::StringLiteral(result);
                 }
                 '\\' => {
-                    // escape sequence
+                    // esc char
                     let esc = self.curr().expect("unterminated escape");
                     self.pos += 1;
                     let ch = match esc {
@@ -242,7 +239,7 @@ impl Lexer {
 
             // identifier / keyword
             if c.is_ascii_alphabetic() || c == '_' {
-                return self.lex_identifier_or_keyword();
+                return self.ident_or_kw();
             }
 
             // number
@@ -255,7 +252,7 @@ impl Lexer {
                 return self.lex_string();
             }
 
-            // the fun stuff: operators / punctuation / comments
+            // the non boomer stuff: operators / punctuation / comments
             match c {
                 // comments: //
                 '/' => {
@@ -403,3 +400,5 @@ pub fn lex(content: &str) -> Vec<TokenKind> {
 
     tokens
 }
+
+// this code is damn clean imma f**k anyone who f**ks this up for some reason (would probably be me)
