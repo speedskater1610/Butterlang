@@ -9,6 +9,7 @@ pub enum TokenKind {
     KwIf,
     KwElse,
     KwFor,
+    KwStruct,
     KwWhile,
     KwReturn,
     KwOut, // break
@@ -133,9 +134,11 @@ impl Lexer {
 
         match text.as_str() {
             "let"    => TokenKind::KwLet,
+            "mut"    => TokenKind::KwMut,
             "fn"     => TokenKind::KwFn,
             "if"     => TokenKind::KwIf,
             "else"   => TokenKind::KwElse,
+            "struct" => TokenKind::KwStruct,
             "for"    => TokenKind::KwFor,
             "while"  => TokenKind::KwWhile,
             "return" => TokenKind::KwReturn,
@@ -198,7 +201,7 @@ impl Lexer {
         while let Some(c) = self.curr() {
             self.pos += 1;
             match c {
-                '"' => {
+                '"' | '\'' => {
                     return TokenKind::StringLiteral(result);
                 }
                 '\\' => {
@@ -248,7 +251,7 @@ impl Lexer {
             }
 
             // string
-            if c == '"' {
+            if c == '"' || c == '\'' {
                 return self.lex_string();
             }
 
@@ -400,5 +403,3 @@ pub fn lex(content: &str) -> Vec<TokenKind> {
 
     tokens
 }
-
-// this code is damn clean imma f**k anyone who f**ks this up for some reason (would probably be me)

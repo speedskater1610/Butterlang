@@ -1,3 +1,5 @@
+use crate::lexer::TokenKind;
+
 #[derive(Debug, Clone)]
 pub enum Expr {
     Int(i64),
@@ -29,6 +31,16 @@ pub enum Expr {
     },
 
     Group(Box<Expr>),
+
+    StructLiteral {
+        name: String,
+        fields: Vec<(String, Expr)>
+    },
+
+    FieldAccess {
+        target: Box<Expr>,
+        field: String,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -71,6 +83,11 @@ pub enum Stmt {
     ExprStmt(Expr),
 
     Return(Option<Expr>),
+
+    Struct {
+        name: String,
+        fields: Vec<(String, Expr)>,
+    },
 
     While {
         cond: Expr,
@@ -177,8 +194,33 @@ impl Parser {
         match self.peek() {
             TokenKind::KwFn => self.parse_func(),
             TokenKind::KwLet | TokenKind::KwConst => self.parse_let(),
+            TokenKind::KwStruct => self.parse_struct(),
             _ => self.parse_stmt(),
         }
+    }
+
+    fn parse_struct(&mut self) -> Stmt {
+        self.expect(&TokenKind::KwStruct, "expected 'struct'");
+        let name = self.take_ident("struct name");
+        self.expect(&TokenKind::LBrace, "Expected '{' after struct name");
+
+        let mut fields = Vec::new();
+
+        while !matches!(self.peek(), TokenKind::RBrace | TokenKind::Eof) {
+            let field_name = self.take_ident("field name");
+            self.expect(&TokenKind::Equal, "expected '=' after field name");
+            let expr = self.parse_expr();
+
+            fields.push((field_name, expr));
+
+            if !self.matches(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        self.expect(&TokenKind::RBrace, "Expected '}' to end a struct");
+
+        Stmt::Struct {name, fields}
     }
 
     fn parse_func(&mut self) -> Stmt {
@@ -509,6 +551,7 @@ impl Parser {
         let mut expr = self.parse_primary();
 
         loop {
+            // fn call: foo(...)
             if self.matches(&TokenKind::LParen) {
                 let mut args = Vec::new();
                 if !matches!(self.peek(), TokenKind::RParen) {
@@ -524,20 +567,68 @@ impl Parser {
                     callee: Box::new(expr),
                     args,
                 };
-            } else if self.matches(&TokenKind::LBracket) {
+            }
+
+            // index: arr[expr]
+            else if self.matches(&TokenKind::LBracket) {
                 let index = self.parse_expr();
                 self.expect(&TokenKind::RBracket, "expected ']' after index");
                 expr = Expr::Index {
                     target: Box::new(expr),
                     index: Box::new(index),
                 };
-            } else {
+            }
+
+            // struct literal: Person { field = value, ... }
+            else if self.matches(&TokenKind::LBrace) {
+                let struct_name = if let Expr::Ident(name) = expr {
+                    name
+                } else {
+                    panic!(
+                        "Parser error: expected struct name before '{{' in struct literal, got {:?}",
+                        expr
+                    );
+                };
+
+                let mut fields = Vec::new();
+
+                while !matches!(self.peek(), TokenKind::RBrace | TokenKind::Eof) {
+                    let field_name = self.take_ident("field name in struct literal");
+                    self.expect(&TokenKind::Equal, "expected '=' after field name");
+                    let value = self.parse_expr();
+
+                    fields.push((field_name, value));
+
+                    if !self.matches(&TokenKind::Comma) {
+                        break;
+                    }
+                }
+
+                self.expect(&TokenKind::RBrace, "expected '}' after struct literal");
+
+                expr = Expr::StructLiteral {
+                    name: struct_name,
+                    fields,
+                };
+            }
+
+            // ⭐ NEW: field access: expr.field
+            else if self.matches(&TokenKind::Dot) {
+                let field = self.take_ident("field name after '.'");
+                expr = Expr::FieldAccess {
+                    target: Box::new(expr),
+                    field,
+                };
+            }
+
+            else {
                 break;
             }
         }
 
         expr
     }
+
 
     fn parse_primary(&mut self) -> Expr {
         match self.bump() {

@@ -1,9 +1,14 @@
 mod lexer;
+mod parser;
 
 fn main() {
-    println!("{:?}", lexer::lex("let a = 1 + 2 * 5
-    while a < 13 {
-        a +=1
-        print(a)
-    }"));
+    println!("{:?}", parser::parse_tokens(lexer::lex("struct person {
+        name = '',
+        age = 0,
+    }
+
+    let a = person { name='liam', age=20 };
+
+    print(a.name);
+    ")));
 }
