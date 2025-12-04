@@ -114,7 +114,7 @@ fn log(msg: String) => nil {
     println(msg);
 }
 ```
-#### Structs
+#### 🏗️ Structs
 ```
 struct Person {
   name: String,
