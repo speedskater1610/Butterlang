@@ -48,3 +48,8 @@ goes to the next token and returns the correct token of current
 loops throught the source code and returns the finished tokens vector
 
 ### **parser.rs**
+
+#### pub enum Expr
+the enum Expr is an enum that stores variants like integers, types, pre/in fix operators, calls, and Index, and Group, and so on
+
+####
