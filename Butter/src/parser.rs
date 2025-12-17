@@ -176,6 +176,14 @@ impl Parser {
         Self { tokens, pos: 0 }
     }
 
+    //  CAMBIO 1: Función de ayuda para manejar errores y salir con código 1
+    fn error_and_exit(msg: &str) -> ! {
+        // Códigos ANSI: \x1b[31m = Rojo, \x1b[0m = Resetear
+        eprintln!("\x1b[31m[BUTTER COMPILER ERROR]\x1b[0m {}", msg);
+        // Salir con código 1 (error)
+        std::process::exit(1);
+    }
+
     fn peek(&self) -> &TokenKind {
         self.tokens.get(self.pos).unwrap_or(&TokenKind::Eof)
     }
@@ -201,25 +209,31 @@ impl Parser {
         }
     }
 
+    //  CAMBIO 2: Reemplazar panic! en expect
     fn expect(&mut self, kind: &TokenKind, msg: &str) {
         if !self.matches(kind) {
-            panic!(
-                "Parser error: expected {:?}, got {:?}. {}",
+            let error_msg = format!(
+                "Expected token {:?}, but got {:?}. (Contexto: {})",
                 kind,
                 self.peek(),
                 msg
             );
+            Self::error_and_exit(&error_msg);
         }
     }
 
+    //  CAMBIO 3: Reemplazar panic! en take_ident
     fn take_ident(&mut self, msg: &str) -> String {
         match self.bump() {
             TokenKind::Ident(s) => s,
-            other => panic!("Parser error: expected identifier, got {:?}. {}", other, msg),
+            other => {
+                let error_msg = format!("Expected identifier, but got {:?}. (Contexto: {})", other, msg);
+                Self::error_and_exit(&error_msg);
+            }
         }
     }
 
-    pub fn parse_program(&mut self) -> Program {
+    fn parse_program(&mut self) -> Program {
         let mut stmts = Vec::new();
         while !self.is_eof() {
             stmts.push(self.parse_decl());
@@ -251,7 +265,10 @@ impl Parser {
             }
 
             TokenKind::KwNil => Type::Nil,
-            other => panic!("expected type name, got {:?}", other),
+            other => {
+                let error_msg = format!("Expected type name, got {:?}", other);
+                Self::error_and_exit(&error_msg);
+            }
         }
     }
 
@@ -705,8 +722,10 @@ impl Parser {
                 Expr::Group(Box::new(expr))
             }
 
+            // ⭐ CAMBIO 4: Reemplazar panic! en el final de parse_primary
             other => {
-                panic!("Parser error: unexpected token in primary: {:?}", other);
+                let error_msg = format!("Parser error: unexpected token in primary: {:?}", other);
+                Self::error_and_exit(&error_msg);
             }
         }
     }
