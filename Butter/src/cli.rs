@@ -1,15 +1,9 @@
-use std::env;
-use crate::compiletask;
-
-pub fn parse_termargs(args: Vec<String>) {
+pub fn parse_termargs(args: Vec<String>) -> (String, String, i8) {
     match args[1].as_str() {
-        "build" => compiletask::compiletobinary("main", 3),
-        "run" => {
-            compiletask::compiletobinary("main", 3);
-            compiletask::runbinary("main");
-        },
+        "build" => return ("build".into(), args[2].clone(), 3),
+        "run" => return ("run".into(), args[2].clone(), 3),
         other => {
-            panic!("Fk off bro noone knows {}", other)
+            panic!("butter lang CLI does not know '{}'", other)
         }
     }
 }

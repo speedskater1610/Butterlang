@@ -1,4 +1,3 @@
-use crate::compiletask::compiletobinary;
 use crate::parser::{
     Program, Stmt, Expr, InfixOp, PrefixOp, Type, Block, BlockOrIf,
 };
@@ -16,9 +15,9 @@ fn type_to_c(t: &Type) -> String {
         Type::Int       => "int64_t".to_string(),
         Type::Float     => "double".to_string(),
         Type::Bool      => "bool".to_string(),
-        Type::String    => "String".to_string(),   // custom String struct
+        Type::String    => "String".to_string(),
         Type::Nil       => "void".to_string(),
-        Type::Custom(name) => name.clone(),        // struct name
+        Type::Custom(name) => name.clone(),
     }
 }
 
@@ -510,7 +509,7 @@ void panic(String msg) {
     );
 }
 
-pub fn transpile(program: Program) {
+pub fn transpile(program: Program, name: &str) {
     let mut out = String::new();
 
     emit_prelude(&mut out);
@@ -529,6 +528,6 @@ int main(void) {
 }
 "#
     );
-    fs::write("main.c", out);
-    
+    fs::write( format!("{name}.c"), out);
+
 }
