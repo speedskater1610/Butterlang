@@ -3,7 +3,8 @@ pub fn parse_termargs(args: Vec<String>) -> (String, String, i8) {
         "build" => return ("build".into(), args[2].clone(), 3),
         "run" => return ("run".into(), args[2].clone(), 3),
         other => {
-            panic!("butter lang CLI does not know '{}'", other)
+        eprintln!("[BUTTER COMPILER ERROR] unknown command '{}'. Use: build|run", other);
+        std::process::exit(1);
         }
     }
 }
